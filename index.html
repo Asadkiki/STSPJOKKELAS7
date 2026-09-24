@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian PJOK - Sumatif Tengah Semester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Disable text selection to make copying harder */
+        .no-select {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Blur effect for warnings */
+        .blur-sm { filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 no-select antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md p-4 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-lg md:text-xl font-bold truncate">Ujian PJOK - Sepak Bola & Bulu Tangkis</h1>
+            <div id="timerDisplay" class="font-mono text-lg bg-blue-700 px-3 py-1 rounded hidden">90:00</div>
+        </div>
+    </header>
+
+    <main id="appContainer" class="flex-grow max-w-4xl mx-auto w-full p-4 relative">
+        
+        <!-- Registration Screen -->
+        <div id="registrationScreen" class="bg-white rounded-xl shadow-lg p-6 md:p-8 mt-10 max-w-md mx-auto transition-opacity duration-300">
+            <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Identitas Siswa</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                    <input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" placeholder="Masukkan nama Anda..." autocomplete="off">
+                </div>
+                <div>
+                    <label for="studentClass" class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                    <select id="studentClass" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
+                        <option value="" disabled selected>Pilih Kelas</option>
+                        <option value="7A">7 A</option>
+                        <option value="7B">7 B</option>
+                        <option value="7C">7 C</option>
+                        <option value="7D">7 D</option>
+                        <option value="7E">7 E</option>
+                        <option value="7F">7 F</option>
+                    </select>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mt-4">
+                    <p class="text-sm text-yellow-800 font-medium">⚠️ Peraturan Ujian:</p>
+                    <ul class="list-disc list-inside text-xs text-yellow-700 mt-2 space-y-1">
+                        <li>Dilarang membuka tab/aplikasi lain.</li>
+                        <li>Dilarang meminimalkan layar browser.</li>
+                        <li>Peringatan maksimal 3 kali sebelum ujian dihentikan paksa.</li>
+                        <li>Waktu ujian 90 menit.</li>
+                    </ul>
+                </div>
+                <button id="startBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow transition-colors mt-6">
+                    Mulai Ujian
+                </button>
+            </div>
+        </div>
+
+        <!-- Exam Screen -->
+        <div id="examScreen" class="hidden flex flex-col md:flex-row gap-6 h-full">
+            <!-- Question Area -->
+            <div class="flex-grow bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col p-6">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">Soal <span id="currentQuestionNum">1</span> dari 50</h3>
+                    <span id="warningBadge" class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Peringatan: 0/3</span>
+                </div>
+                
+                <div id="questionText" class="text-lg text-gray-700 mb-8 flex-grow">
+                    <!-- Question injected here -->
+                </div>
+                
+                <div id="optionsContainer" class="space-y-3 mb-8">
+                    <!-- Options injected here -->
+                </div>
+                
+                <div class="flex justify-between mt-auto pt-4 border-t">
+                    <button id="prevBtn" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        &larr; Sebelumnya
+                    </button>
+                    <button id="nextBtn" class="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-colors">
+                        Selanjutnya &rarr;
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Panel -->
+            <div class="w-full md:w-64 flex-shrink-0 flex flex-col gap-4">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <h4 class="font-semibold text-gray-700 mb-3 text-center">Navigasi Soal</h4>
+                    <div id="questionGrid" class="grid grid-cols-5 gap-2 max-h-48 md:max-h-96 overflow-y-auto p-1">
+                        <!-- Number grid injected here -->
+                    </div>
+                    <div class="mt-4 flex gap-2 justify-center text-xs text-gray-500">
+                        <span class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-1"></span>Dijawab</span>
+                        <span class="flex items-center"><span class="w-3 h-3 bg-gray-200 rounded-full mr-1 border border-gray-300"></span>Belum</span>
+                    </div>
+                </div>
+                <button id="preSubmitBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow transition-colors">
+                    Selesai Ujian
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="resultScreen" class="hidden bg-white rounded-xl shadow-lg p-8 mt-10 max-w-md mx-auto text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Ujian Selesai!</h2>
+            <p class="text-gray-600 mb-6">Terima kasih, jawaban Anda telah tersimpan.</p>
+            <div class="bg-gray-50 p-4 rounded-lg text-left space-y-2 mb-6 border">
+                <p><span class="font-semibold text-gray-700">Nama:</span> <span id="resName"></span></p>
+                <p><span class="font-semibold text-gray-700">Kelas:</span> <span id="resClass"></span></p>
+                <p><span class="font-semibold text-gray-700">Nilai:</span> <span id="resScore" class="text-xl font-bold text-blue-600"></span> / 100</p>
+            </div>
+            <p id="saveStatus" class="text-sm font-medium text-blue-600">Menyimpan ke Spreadsheet...</p>
+        </div>
+
+    </main>
+
+    <!-- Warning Modal -->
+    <div id="warningModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Peringatan Kecurangan!</h3>
+            <p id="warningMsg" class="text-gray-600 mb-6">Sistem mendeteksi Anda meninggalkan halaman ujian. Ini adalah peringatan ke-<span id="warnCountDisplay" class="font-bold">1</span> dari 3.</p>
+            <button id="ackWarningBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Saya Mengerti
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirm Submit Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Konfirmasi Pengumpulan</h3>
+            <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                <p class="flex justify-between items-center text-sm font-medium text-gray-700 mb-2">
+                    <span>Soal Dijawab:</span>
+                    <span id="answeredCountBadge" class="bg-green-200 text-green-800 px-2 py-1 rounded-md text-base">0</span>
+                </p>
+                <p class="flex justify-between items-center text-sm font-medium text-gray-700">
+                    <span>Soal Belum Dijawab:</span>
+                    <span id="unansweredCountBadge" class="bg-red-200 text-red-800 px-2 py-1 rounded-md text-base">50</span>
+                </p>
+            </div>
+            <p class="text-sm text-gray-600 mb-6" id="submitWarningText"></p>
+            <div class="flex gap-3">
+                <button id="cancelSubmitBtn" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors">
+                    Kembali
+                </button>
+                <button id="finalSubmitBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                    Kumpulkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // GANTI URL DI BAWAH INI DENGAN URL DEPLOY GOOGLE APPS SCRIPT ANDA
+        // ==========================================
+        const APPSCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzzfGVKgtMjkS8L4XIERgA_WNJqWtJBoHcicoZIPRG2EdqW0mOMQWRkkBx7VZryofs_7Q/exec"; 
+        
+        // State management
+        const state = {
+            studentName: '', studentClass: '', currentQuestion: 0,
+            answers: new Array(50).fill(null), warnings: 0, maxWarnings: 3,
+            isExamActive: false, timeLeft: 90 * 60, timerInterval: null
+        };
+
+        const els = {
+            screens: { reg: document.getElementById('registrationScreen'), exam: document.getElementById('examScreen'), result: document.getElementById('resultScreen') },
+            inputs: { name: document.getElementById('studentName'), cls: document.getElementById('studentClass') },
+            btns: { start: document.getElementById('startBtn'), prev: document.getElementById('prevBtn'), next: document.getElementById('nextBtn'), preSubmit: document.getElementById('preSubmitBtn'), ackWarn: document.getElementById('ackWarningBtn'), cancelSubmit: document.getElementById('cancelSubmitBtn'), finalSubmit: document.getElementById('finalSubmitBtn') },
+            exam: { qNum: document.getElementById('currentQuestionNum'), qText: document.getElementById('questionText'), options: document.getElementById('optionsContainer'), grid: document.getElementById('questionGrid'), timer: document.getElementById('timerDisplay'), warnBadge: document.getElementById('warningBadge') },
+            modals: { warn: document.getElementById('warningModal'), confirm: document.getElementById('confirmModal') }
+        };
+
+        // 50 Soal Asli: 25 Sepak Bola, 25 Bulu Tangkis
+        const questions = [
+            // SEPAK BOLA
+            { text: "Induk organisasi sepak bola tingkat dunia adalah...", options: ["A. FIBA", "B. FIFA", "C. BWF", "D. FINA"], correct: 1 },
+            { text: "Induk organisasi sepak bola di Indonesia adalah...", options: ["A. PSSI", "B. PBVSI", "C. PASI", "D. PERBASI"], correct: 0 },
+            { text: "Lama waktu normal dalam pertandingan sepak bola adalah...", options: ["A. 2 x 30 menit", "B. 2 x 40 menit", "C. 2 x 45 menit", "D. 2 x 50 menit"], correct: 2 },
+            { text: "Jumlah pemain dalam satu tim sepak bola yang bertanding di lapangan adalah...", options: ["A. 9 orang", "B. 10 orang", "C. 11 orang", "D. 12 orang"], correct: 2 },
+            { text: "Tujuan utama dari permainan sepak bola adalah...", options: ["A. Bermain indah", "B. Menghibur penonton", "C. Mencetak gol sebanyak-banyaknya", "D. Menjaga gawang agar tidak kebobolan"], correct: 2 },
+            { text: "Teknik menendang bola ke arah gawang lawan untuk mencetak gol disebut...", options: ["A. Passing", "B. Shooting", "C. Dribbling", "D. Heading"], correct: 1 },
+            { text: "Teknik dasar mengoper bola kepada teman satu tim disebut...", options: ["A. Dribbling", "B. Heading", "C. Passing", "D. Tackling"], correct: 2 },
+            { text: "Membawa bola dengan berlari sambil menendang bola secara perlahan disebut...", options: ["A. Shooting", "B. Dribbling", "C. Juggling", "D. Control"], correct: 1 },
+            { text: "Teknik mengarahkan bola menggunakan kepala disebut...", options: ["A. Heading", "B. Dribbling", "C. Passing", "D. Throw-in"], correct: 0 },
+            { text: "Jika terjadi pelanggaran keras oleh pemain bertahan di dalam kotak penaltinya sendiri, maka hukuman yang diberikan adalah...", options: ["A. Tendangan bebas langsung", "B. Tendangan sudut", "C. Tendangan penalti", "D. Lemparan ke dalam"], correct: 2 },
+            { text: "Hukuman tendangan yang dilakukan dari pojok lapangan karena bola keluar melewati garis gawang dan terakhir disentuh pemain bertahan disebut...", options: ["A. Free kick", "B. Corner kick", "C. Penalty kick", "D. Goal kick"], correct: 1 },
+            { text: "Pemain yang bertugas khusus menjaga gawang agar tidak kebobolan disebut...", options: ["A. Striker", "B. Midfielder", "C. Defender", "D. Goalkeeper"], correct: 3 },
+            { text: "Pemain yang berposisi di area depan dan bertugas utama mencetak gol disebut...", options: ["A. Striker", "B. Playmaker", "C. Bek", "D. Winger"], correct: 0 },
+            { text: "Kartu yang diberikan wasit sebagai tanda peringatan keras kepada pemain adalah...", options: ["A. Kartu Merah", "B. Kartu Biru", "C. Kartu Kuning", "D. Kartu Hijau"], correct: 2 },
+            { text: "Apabila pemain menerima kartu merah dari wasit, maka pemain tersebut harus...", options: ["A. Istirahat 10 menit", "B. Diganti pemain lain", "C. Keluar dari lapangan permainan", "D. Membayar denda"], correct: 2 },
+            { text: "Situasi dimana pemain penyerang berada lebih dekat ke garis gawang lawan daripada bola dan pemain bertahan lawan kedua saat bola diumpan disebut...", options: ["A. Offside", "B. Foul", "C. Corner", "D. Throw-in"], correct: 0 },
+            { text: "Memulai kembali permainan setelah bola keluar melewati garis samping lapangan dilakukan dengan cara...", options: ["A. Tendangan bebas", "B. Lemparan ke dalam (Throw-in)", "C. Tendangan gawang", "D. Tendangan sudut"], correct: 1 },
+            { text: "Bagian tubuh yang TIDAK boleh digunakan oleh pemain selain kiper dalam permainan sepak bola adalah...", options: ["A. Kepala", "B. Dada", "C. Tangan", "D. Paha"], correct: 2 },
+            { text: "Tendangan awal untuk memulai pertandingan di tengah lapangan disebut...", options: ["A. Kick-off", "B. Corner-kick", "C. Free-kick", "D. Goal-kick"], correct: 0 },
+            { text: "Formasi 4-4-2 dalam sepak bola mengisyaratkan jumlah pemain bertahan sebanyak...", options: ["A. 2 orang", "B. 4 orang", "C. 6 orang", "D. 8 orang"], correct: 1 },
+            { text: "Taktik pertahanan dimana setiap pemain bertahan menjaga satu pemain lawan secara ketat disebut...", options: ["A. Zone marking", "B. Man-to-man marking", "C. Pressing", "D. Counter attack"], correct: 1 },
+            { text: "Serangan balik cepat yang dilakukan saat tim lawan sedang asyik menyerang disebut...", options: ["A. Ball possession", "B. Total football", "C. Counter attack", "D. Tiki-taka"], correct: 2 },
+            { text: "Ukuran panjang lapangan sepak bola standar internasional adalah...", options: ["A. 90 - 100 meter", "B. 100 - 110 meter", "C. 110 - 120 meter", "D. 120 - 130 meter"], correct: 1 },
+            { text: "Turnamen kejuaraan sepak bola antar negara terbesar di dunia adalah...", options: ["A. Liga Champions", "B. Piala Asia", "C. Piala Eropa", "D. Piala Dunia (World Cup)"], correct: 3 },
+            { text: "Negara yang pertama kali mempopulerkan permainan sepak bola modern adalah...", options: ["A. Brazil", "B. Argentina", "C. Inggris", "D. Jerman"], correct: 2 },
+            
+            // BULU TANGKIS
+            { text: "Induk organisasi bulu tangkis tingkat dunia adalah...", options: ["A. FIFA", "B. BWF", "C. FIBA", "D. ITTF"], correct: 1 },
+            { text: "Induk organisasi bulu tangkis di Indonesia adalah...", options: ["A. PBSI", "B. PSSI", "C. PBVSI", "D. PASI"], correct: 0 },
+            { text: "Kejuaraan bulu tangkis beregu putra tingkat dunia memperebutkan...", options: ["A. Piala Uber", "B. Piala Sudirman", "C. Piala Thomas", "D. Piala Davis"], correct: 2 },
+            { text: "Kejuaraan bulu tangkis beregu putri tingkat dunia memperebutkan...", options: ["A. Piala Uber", "B. Piala Sudirman", "C. Piala Thomas", "D. All England"], correct: 0 },
+            { text: "Pukulan pertama untuk mengawali sebuah reli dalam bulu tangkis disebut...", options: ["A. Smash", "B. Servis", "C. Dropshot", "D. Lob"], correct: 1 },
+            { text: "Pukulan keras dan menukik tajam ke arah lapangan lawan dengan tujuan mematikan disebut...", options: ["A. Lob", "B. Drive", "C. Smash", "D. Netting"], correct: 2 },
+            { text: "Pukulan yang melambung tinggi dan mengarah jauh ke garis belakang lapangan lawan disebut...", options: ["A. Lob (Clear)", "B. Smash", "C. Dropshot", "D. Drive"], correct: 0 },
+            { text: "Pukulan yang dilakukan seperti smash namun dengan sentuhan halus sehingga kok jatuh tipis di dekat net lawan disebut...", options: ["A. Netting", "B. Drive", "C. Lob", "D. Dropshot"], correct: 3 },
+            { text: "Pukulan mendatar dan cepat yang sering digunakan dalam permainan ganda disebut...", options: ["A. Smash", "B. Drive", "C. Dropshot", "D. Lob"], correct: 1 },
+            { text: "Permainan halus yang dilakukan di dekat net agar kok jatuh setipis mungkin dengan net di daerah lawan disebut...", options: ["A. Netting", "B. Servis", "C. Smash", "D. Drive"], correct: 0 },
+            { text: "Cara memegang raket seperti orang yang sedang berjabat tangan disebut...", options: ["A. Backhand grip", "B. Forehand grip", "C. American grip", "D. Penhold grip"], correct: 1 },
+            { text: "Pegangan raket dimana posisi ibu jari berada di bagian pegangan raket yang pipih/lebar sebagai tumpuan adalah...", options: ["A. Forehand grip", "B. Backhand grip", "C. American grip", "D. Combination grip"], correct: 1 },
+            { text: "Pengaturan langkah kaki yang benar dalam bermain bulu tangkis agar seimbang dan lincah disebut...", options: ["A. Footwork", "B. Follow through", "C. Jumping", "D. Running"], correct: 0 },
+            { text: "Sistem penilaian yang digunakan dalam pertandingan bulu tangkis resmi saat ini adalah...", options: ["A. Pindah bola", "B. Rally point", "C. Tie break", "D. Deuce point"], correct: 1 },
+            { text: "Satu set/game dalam pertandingan bulu tangkis berakhir apabila salah satu pemain/pasangan mencapai angka...", options: ["A. 11 poin", "B. 15 poin", "C. 21 poin", "D. 25 poin"], correct: 2 },
+            { text: "Apabila terjadi skor imbang 20-20 (deuce), maka pemenang set tersebut adalah yang berhasil unggul selisih...", options: ["A. 1 poin", "B. 2 poin", "C. 3 poin", "D. 4 poin"], correct: 1 },
+            { text: "Batas maksimal poin yang bisa dicapai jika terjadi deuce berkepanjangan adalah angka...", options: ["A. 25", "B. 30", "C. 35", "D. Tak terhingga"], correct: 1 },
+            { text: "Nomor pertandingan satu pemain putra melawan satu pemain putra lainnya disebut...", options: ["A. Tunggal putra", "B. Ganda putra", "C. Ganda campuran", "D. Ganda putri"], correct: 0 },
+            { text: "Nomor pertandingan yang dimainkan oleh pasangan putra dan putri melawan pasangan putra dan putri disebut...", options: ["A. Ganda putra", "B. Ganda putri", "C. Ganda campuran", "D. Tunggal campuran"], correct: 2 },
+            { text: "Bentuk lapangan bulu tangkis adalah...", options: ["A. Bujur sangkar", "B. Persegi panjang", "C. Lingkaran", "D. Segi enam"], correct: 1 },
+            { text: "Benda yang dipukul hilir mudik dalam permainan bulu tangkis disebut...", options: ["A. Bola", "B. Bet", "C. Shuttlecock (Kok)", "D. Puck"], correct: 2 },
+            { text: "Bahan utama standar untuk membuat ujung/kepala shuttlecock profesional adalah...", options: ["A. Karet", "B. Plastik", "C. Gabus berlapis kulit", "D. Kayu"], correct: 2 },
+            { text: "Shuttlecock standar terbuat dari rangkaian bulu unggas (biasanya angsa/bebek) yang berjumlah...", options: ["A. 12 helai", "B. 14 helai", "C. 16 helai", "D. 18 helai"], correct: 2 },
+            { text: "Jika saat melakukan servis, kok menyangkut di net dan tidak menyeberang, maka...", options: ["A. Servis diulang", "B. Poin untuk lawan", "C. Pemain didiskualifikasi", "D. Permainan dihentikan sementara"], correct: 1 },
+            { text: "Turnamen kejuaraan bulu tangkis tertua dan paling prestisius di dunia yang diadakan di Inggris adalah...", options: ["A. Indonesia Open", "B. China Open", "C. All England", "D. BWF World Championship"], correct: 2 }
+        ];
+
+        function init() {
+            els.btns.start.addEventListener('click', handleStart);
+            els.btns.next.addEventListener('click', () => navigate(1));
+            els.btns.prev.addEventListener('click', () => navigate(-1));
+            els.btns.preSubmit.addEventListener('click', showConfirmModal);
+            els.btns.cancelSubmit.addEventListener('click', () => els.modals.confirm.classList.add('hidden'));
+            els.btns.finalSubmit.addEventListener('click', calculateAndSubmit);
+            els.btns.ackWarn.addEventListener('click', dismissWarning);
+
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('blur', handleBlur);
+            
+            document.addEventListener('keydown', (e) => {
+                if (!state.isExamActive) return;
+                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'c')) { e.preventDefault(); }
+            });
+            document.addEventListener('contextmenu', e => { if(state.isExamActive) e.preventDefault(); });
+            
+            buildGrid();
+        }
+
+        function handleStart() {
+            const name = els.inputs.name.value.trim();
+            const cls = els.inputs.cls.value;
+            if (!name || !cls) return alert("Harap isi nama dan kelas terlebih dahulu!");
+
+            state.studentName = name; state.studentClass = cls; state.isExamActive = true;
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => console.warn("Fullscreen permission denied:", e));
+            }
+
+            els.screens.reg.classList.add('hidden'); els.screens.exam.classList.remove('hidden'); els.exam.timer.classList.remove('hidden');
+            renderQuestion(); startTimer();
+        }
+
+        function buildGrid() {
+            els.exam.grid.innerHTML = '';
+            for (let i = 0; i < questions.length; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'w-8 h-8 rounded text-xs font-semibold flex items-center justify-center border transition-colors';
+                btn.innerText = i + 1;
+                btn.onclick = () => { state.currentQuestion = i; renderQuestion(); };
+                els.exam.grid.appendChild(btn);
+            }
+            updateGridState();
+        }
+
+        function updateGridState() {
+            const btns = els.exam.grid.children;
+            for (let i = 0; i < questions.length; i++) {
+                const btn = btns[i];
+                btn.classList.remove('bg-blue-600', 'text-white', 'bg-green-500', 'bg-white', 'text-gray-700', 'border-gray-300', 'ring-2', 'ring-blue-400');
+                if (i === state.currentQuestion) { btn.classList.add('ring-2', 'ring-blue-400', 'bg-white', 'text-blue-700', 'border-blue-300'); } 
+                else if (state.answers[i] !== null) { btn.classList.add('bg-green-500', 'text-white', 'border-green-600'); } 
+                else { btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-100'); }
+            }
+        }
+
+        function renderQuestion() {
+            const qIndex = state.currentQuestion; const q = questions[qIndex];
+            els.exam.qNum.innerText = qIndex + 1; els.exam.qText.innerText = q.text;
+            
+            els.exam.options.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                const label = document.createElement('label');
+                label.className = `flex items-center p-4 border rounded-xl cursor-pointer transition-all ${state.answers[qIndex] === idx ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50'}`;
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio'; radio.name = 'q_option'; radio.className = 'w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500';
+                radio.checked = state.answers[qIndex] === idx;
+                radio.onchange = () => handleAnswer(idx, label);
+                
+                const text = document.createElement('span'); text.className = 'ml-3 text-gray-700'; text.innerText = opt;
+                label.appendChild(radio); label.appendChild(text); els.exam.options.appendChild(label);
+            });
+
+            els.btns.prev.disabled = qIndex === 0;
+            els.btns.next.innerText = qIndex === questions.length - 1 ? 'Selesai' : 'Selanjutnya \u2192';
+            
+            if (qIndex === questions.length - 1) {
+                els.btns.next.classList.replace('bg-blue-100', 'bg-green-100'); els.btns.next.classList.replace('text-blue-700', 'text-green-700'); els.btns.next.classList.replace('hover:bg-blue-200', 'hover:bg-green-200');
+            } else {
+                els.btns.next.classList.replace('bg-green-100', 'bg-blue-100'); els.btns.next.classList.replace('text-green-700', 'text-blue-700'); els.btns.next.classList.replace('hover:bg-green-200', 'hover:bg-blue-200');
+            }
+            updateGridState();
+        }
+
+        function handleAnswer(idx, labelEl) {
+            state.answers[state.currentQuestion] = idx;
+            const allLabels = els.exam.options.querySelectorAll('label');
+            allLabels.forEach(l => l.className = 'flex items-center p-4 border rounded-xl cursor-pointer transition-all border-gray-200 hover:bg-gray-50');
+            labelEl.className = 'flex items-center p-4 border rounded-xl cursor-pointer transition-all border-blue-500 bg-blue-50 ring-1 ring-blue-500';
+            updateGridState();
+        }
+
+        function navigate(dir) {
+            if (dir === 1 && state.currentQuestion === questions.length - 1) { showConfirmModal(); return; }
+            state.currentQuestion += dir; renderQuestion();
+        }
+
+        function startTimer() {
+            updateTimerDisplay();
+            state.timerInterval = setInterval(() => {
+                state.timeLeft--; updateTimerDisplay();
+                if (state.timeLeft <= 0) { clearInterval(state.timerInterval); calculateAndSubmit(); }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(state.timeLeft / 60); const s = state.timeLeft % 60;
+            els.exam.timer.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (state.timeLeft < 300) { els.exam.timer.classList.replace('bg-blue-700', 'bg-red-600'); els.exam.timer.classList.add('animate-pulse'); }
+        }
+
+        function showConfirmModal() {
+            const answered = state.answers.filter(a => a !== null).length;
+            const unanswered = questions.length - answered;
+            document.getElementById('answeredCountBadge').innerText = answered;
+            document.getElementById('unansweredCountBadge').innerText = unanswered;
+            
+            if (unanswered > 0) {
+                document.getElementById('submitWarningText').innerHTML = `Terdapat <span class="font-bold text-red-600">${unanswered} soal yang belum dijawab</span>. Yakin ingin mengumpulkan?`;
+            } else {
+                document.getElementById('submitWarningText').innerText = "Semua soal telah dijawab. Anda yakin ingin menyimpan dan menyelesaikan ujian?";
+            }
+            els.modals.confirm.classList.remove('hidden');
+        }
+
+        function triggerWarning() {
+            if (!state.isExamActive) return;
+            state.warnings++; els.exam.warnBadge.innerText = `Peringatan: ${state.warnings}/3`;
+            
+            if (state.warnings >= 3) {
+                els.exam.warnBadge.classList.replace('bg-green-100', 'bg-red-100'); els.exam.warnBadge.classList.replace('text-green-800', 'text-red-800');
+                alert("PELANGGARAN MAKSIMAL: Anda telah keluar dari halaman ujian 3 kali. Ujian dihentikan paksa.");
+                calculateAndSubmit(); return;
+            }
+            if(state.warnings === 2) { els.exam.warnBadge.classList.replace('bg-green-100', 'bg-yellow-100'); els.exam.warnBadge.classList.replace('text-green-800', 'text-yellow-800'); }
+            document.getElementById('warnCountDisplay').innerText = state.warnings;
+            els.modals.warn.classList.remove('hidden'); document.getElementById('appContainer').classList.add('blur-sm');
+        }
+
+        function handleVisibilityChange() { if (document.hidden && state.isExamActive) triggerWarning(); }
+        function handleBlur() { if (state.isExamActive && document.activeElement !== document.body) triggerWarning(); }
+        
+        function dismissWarning() {
+            els.modals.warn.classList.add('hidden'); document.getElementById('appContainer').classList.remove('blur-sm');
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(e => console.warn("Fullscreen permission denied:", e));
+            }
+        }
+
+        async function calculateAndSubmit() {
+            state.isExamActive = false; clearInterval(state.timerInterval); els.modals.confirm.classList.add('hidden');
+            
+            let correctCount = 0;
+            state.answers.forEach((ans, idx) => { if (ans === questions[idx].correct) correctCount++; });
+            const score = (correctCount / 50) * 100;
+
+            els.screens.exam.classList.add('hidden'); els.screens.result.classList.remove('hidden'); els.exam.timer.classList.add('hidden');
+            document.getElementById('resName').innerText = state.studentName;
+            document.getElementById('resClass').innerText = state.studentClass;
+            document.getElementById('resScore').innerText = score;
+
+            if (document.fullscreenElement) { document.exitFullscreen().catch(err => console.log(err)); }
+            
+            // Pengiriman Data ke Apps Script
+            const statusEl = document.getElementById('saveStatus');
+            if (APPSCRIPT_WEB_APP_URL === "URL_WEBAPP_APPSCRIPT_ANDA_DISINI") {
+                statusEl.innerText = "Simulasi Selesai (URL Apps Script belum diatur).";
+                statusEl.classList.replace('text-blue-600', 'text-gray-500');
+                return;
+            }
+
+            const payload = new URLSearchParams();
+            payload.append('nama', state.studentName);
+            payload.append('kelas', state.studentClass);
+            payload.append('nilai', score);
+            payload.append('pelanggaran', state.warnings);
+
+            try {
+                await fetch(APPSCRIPT_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: payload
+                });
+                statusEl.innerText = "Data berhasil disimpan ke Spreadsheet.";
+                statusEl.classList.replace('text-blue-600', 'text-green-600');
+            } catch (error) {
+                console.error(error);
+                statusEl.innerText = "Gagal mengirim data. Pastikan koneksi internet stabil.";
+                statusEl.classList.replace('text-blue-600', 'text-red-600');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
